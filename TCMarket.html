@@ -72,12 +72,7 @@
 
     <p>
         Ta tabela przedstawia aktualne ceny przedmiotów na TC Market.  
-        <strong>Jak interpretować dane?</strong>
-        <ul>
-            <li><strong>Ilość:</strong> Liczba przedmiotów sprzedawanych w paczce (np. 10x oznacza 10 sztuk).</li>
-            <li><strong>Bonusy:</strong> Specjalne właściwości przedmiotu, np. [ml.+2%] oznacza bonus do magicznego poziomu.</li>
-            <li><strong>Najniższa cena:</strong> Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</li>
-        </ul>
+        <strong>Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</strong>
     </p>
 
     <textarea id="dataInput" placeholder="Wpisz tutaj dane..."></textarea><br>
@@ -97,17 +92,7 @@
             prices = {};
 
             lines.forEach(entry => {
-                const match = entry.match(/
-
-\[TC Market\]
-
- #(\d+):\s(\d+)x\s([^
-
-\[\d\-]+)\s?((?:
-
-\[.*?\]
-
-)*)\s-\sPrice:\s(\d+) Tibia Coins/);
+                const match = entry.match(/\[TC Market\] #(\d+):\s(\d+)x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
                 if (match) {
                     const auctionNumber = `#${match[1]}`;
                     const quantity = match[2]; // Ilość przedmiotów
