@@ -230,11 +230,7 @@
       raw.split("\n").forEach(line => {
         const txt = line.trim();
         if (!txt) return;
-        const idM     = txt.match(/
-
-\[TC Market\]
-
-\s*#(\d+):/i);
+        const idM     = txt.match(/\[TC Market\]\s*#(\d+):/i);
         const sellM   = txt.match(/\(by\s*([^)]+)\)/i);
         const qtyM    = txt.match(/(\d+)x/i);
         const priceM  = txt.match(/Price:\s*(\d+)\s*Tibia\s*Coins/i);
@@ -253,21 +249,11 @@
         const mid      = txt.slice(midStart,midEnd).trim();
 
         // zbieramy wszystkie bonusy
-        const bonusMatches = [...mid.matchAll(/
-
-\[([^\]
-
-]+)\]
-
-/g)];
+        const bonusMatches = [...mid.matchAll(/\[([^\]]+)\]/g)];
         const bonuses      = bonusMatches.map(m=>`[${m[1].trim()}]`).join(" ");
 
         // usuwamy bonusy, zostaje nazwa
-        const name = mid.replace(/
-
-\[.*?\]
-
-/g,"").trim();
+        const name = mid.replace(/\[.*?\]/g,"").trim();
 
         if (!prices[name]) prices[name] = [];
         prices[name].push({ auction:"#"+id, seller, qty, bonus: bonuses, total, unit, cmd });
