@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC Market Prices v1.2.0</title> <!-- Zaktualizowano wersję -->
+    <title>TC Market Prices v1.3.0</title> <!-- Zaktualizowano wersję -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,10 +58,11 @@
     </style>
 </head>
 <body>
-    <h1>TC Market Prices v1.2.0</h1> <!-- Zaktualizowano wersję -->
+    <h1>TC Market Prices v1.3.0</h1> <!-- Zaktualizowano wersję -->
     <textarea id="dataInput" placeholder="Wpisz tutaj dane..."></textarea><br>
     <button id="processButton">Przetwórz dane</button><br>
     <input id="filterInput" type="text" placeholder="Filtruj według nazwy..." oninput="renderTable()">
+    <input id="bonusFilterInput" type="text" placeholder="Filtruj według bonusów..." oninput="renderTable()">
     <div class="table-container">
         <div id="output"></div>
     </div>
@@ -75,17 +76,18 @@
             prices = {};
 
             lines.forEach(entry => {
-                const match = entry.match(/\[TC Market\] #(\d+):\s1x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
+                const match = entry.match(/\[TC Market\] #(\d+):\s(\d+)x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
                 if (match) {
                     const auctionNumber = `#${match[1]}`;
-                    const item = match[2].trim();
-                    const bonuses = match[3] ? match[3].trim() : "";
-                    const price = match[4];
+                    const quantity = match[2]; // Ilość przedmiotów
+                    const item = match[3].trim();
+                    const bonuses = match[4] ? match[4].trim() : "";
+                    const price = match[5];
 
                     if (!prices[item]) {
                         prices[item] = [];
                     }
-                    prices[item].push({ auctionNumber, bonuses, price });
+                    prices[item].push({ auctionNumber, quantity, bonuses, price });
                 }
             });
 
@@ -94,6 +96,7 @@
 
         function renderTable() {
             const filterText = document.getElementById("filterInput").value.toLowerCase();
+            const bonusFilterText = document.getElementById("bonusFilterInput").value.toLowerCase();
             const output = document.getElementById("output");
             output.innerHTML = "";
 
@@ -103,38 +106,47 @@
                 const table = document.createElement("table");
                 const headerRow = document.createElement("tr");
                 const headerAuction = document.createElement("th");
+                const headerQuantity = document.createElement("th");
                 const headerItem = document.createElement("th");
                 const headerBonus = document.createElement("th");
                 const headerPrice = document.createElement("th");
                 headerAuction.textContent = "Numer Aukcji";
+                headerQuantity.textContent = "Ilość";
                 headerItem.textContent = "Przedmiot";
                 headerBonus.textContent = "Bonusy";
                 headerPrice.textContent = "Cena";
                 headerRow.appendChild(headerAuction);
+                headerRow.appendChild(headerQuantity);
                 headerRow.appendChild(headerItem);
                 headerRow.appendChild(headerBonus);
                 headerRow.appendChild(headerPrice);
                 table.appendChild(headerRow);
 
                 sortedItems.forEach(item => {
-                    if (item.toLowerCase().includes(filterText)) {
-                        prices[item].forEach(({ auctionNumber, bonuses, price }) => {
+                    prices[item].forEach(({ auctionNumber, quantity, bonuses, price }) => {
+                        if (
+                            item.toLowerCase().includes(filterText) &&
+                            (bonuses.toLowerCase().includes(bonusFilterText) || bonusFilterText === "")
+                        ) {
                             const row = document.createElement("tr");
                             const auctionCell = document.createElement("td");
+                            const quantityCell = document.createElement("td");
                             const itemCell = document.createElement("td");
                             const bonusCell = document.createElement("td");
                             const priceCell = document.createElement("td");
                             auctionCell.textContent = auctionNumber;
+                            quantityCell.textContent = quantity;
                             itemCell.textContent = item;
-                            bonusCell.textContent = bonuses;
+                            bonusCell.textContent = bonuses ? bonuses : ""; // Pusta komórka zamiast "Brak"
                             priceCell.textContent = `${price} Tibia Coins`;
                             row.appendChild(auctionCell);
+                            row.appendChild(quantityCell);
                             row.appendChild(itemCell);
                             row.appendChild(bonusCell);
                             row.appendChild(priceCell);
                             table.appendChild(row);
-                        });
-                    }
+                        }
+                    });
                 });
 
                 output.appendChild(table);
