@@ -56,6 +56,16 @@
             color: white;
         }
     </style>
+</head>
+<body>
+    <h1>Ceny przedmiotów z TC Market</h1>
+    <textarea id="dataInput" placeholder="Wpisz tutaj dane..."></textarea><br>
+    <button id="processButton">Przetwórz dane</button><br>
+    <input id="filterInput" type="text" placeholder="Filtruj według nazwy..." oninput="renderTable()">
+    <div class="table-container">
+        <div id="output"></div>
+    </div>
+
     <script>
         let prices = {};
 
@@ -129,15 +139,8 @@
                 output.innerHTML = "<p>Brak poprawnych danych.</p>";
             }
         }
+
+        document.getElementById("processButton").addEventListener("click", processData);
     </script>
-</head>
-<body>
-    <h1>Ceny przedmiotów z TC Market</h1>
-    <textarea id="dataInput" placeholder="Wpisz tutaj dane..."></textarea><br>
-    <button onclick="processData()">Przetwórz dane</button><br>
-    <input id="filterInput" type="text" placeholder="Filtruj według nazwy..." oninput="renderTable()">
-    <div class="table-container">
-        <div id="output"></div>
-    </div>
 </body>
 </html>
