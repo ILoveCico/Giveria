@@ -29,7 +29,12 @@
       margin: auto;
       text-align: left;
     }
-    code { display: block; background: #eee; padding: 5px; margin: 5px 0; }
+    code {
+      display: block;
+      background: #eee;
+      padding: 5px;
+      margin: 5px 0;
+    }
     textarea, input[type="text"] {
       width: 80%;
       padding: 10px;
@@ -88,8 +93,10 @@
 
   <!-- SELECT JĘZYKA -->
   <select id="langSelect">
-    <option value="pl">PL</option>
-    <option value="en">EN</option>
+    <option value="pl">🇵🇱 PL</option>
+    <option value="en">🇬🇧 EN</option>
+    <option value="pt">🇧🇷 BR</option>
+    <option value="sv">🇸🇪 SV</option>
   </select>
 
   <h1 id="mainHeading">Giveria Coin Market Manager v1.8.0</h1>
@@ -116,10 +123,10 @@
   </div>
 
   <script>
-    // 1) Hoist prices to top so it's available in updateLanguage/renderTable
+    // hoist prices
     let prices = {};
 
-    // 2) i18n dictionary
+    // słownik tłumaczeń
     const i18n = {
       pl: {
         title:      'GCMM v1.8.0 by Tralalero Tralala',
@@ -178,6 +185,64 @@
         ],
         copy:     'Copy',
         copied:   'Copied!'
+      },
+      pt: {
+        title:      'GCMM v1.8.0 by Tralalero Tralala',
+        heading:    'Gerenciador do Mercado Giveria Coin v1.8.0',
+        byline:     'por Tralalero Tralala',
+        instruction:
+          'Cole a lista de leilões no seguinte formato:',
+        codeSample:
+          '[TC Market] #123: (by Vendedor) 10x Nome do Item [bonus1] [bonus2] ... - Price: 400 Tibia Coins',
+        codeLabel:
+          'Use filtros para refinar os leilões por nome e bônus.',
+        placeholderData:   'Cole seus leilões aqui...',
+        processButton:     'Processar dados',
+        filterName:        'Filtrar por nome do item...',
+        filterBonus:       'Filtrar por bônus...',
+        noInput:           'Nenhum dado de entrada.',
+        noData:            'Nenhum dado válido.',
+        tableHeaders: [
+          'Número do leilão',
+          'Vendedor',
+          'Quantidade',
+          'Item',
+          'Bônus',
+          'Preço (TC)',
+          'Preço unitário (TC)',
+          'Comando'
+        ],
+        copy:     'Copiar',
+        copied:   'Copiado!'
+      },
+      sv: {
+        title:      'GCMM v1.8.0 by Tralalero Tralala',
+        heading:    'Giveria Coin Market Manager v1.8.0',
+        byline:     'av Tralalero Tralala',
+        instruction:
+          'Klistra in listan över auktioner i följande format:',
+        codeSample:
+          '[TC Market] #123: (by Säljare) 10x Föremålsnamn [bonus1] [bonus2] ... - Price: 400 Tibia Coins',
+        codeLabel:
+          'Använd filtren för att begränsa auktioner efter namn och bonusar.',
+        placeholderData:   'Klistra in dina auktioner här...',
+        processButton:     'Bearbeta data',
+        filterName:        'Filtrera efter föremålsnamn...',
+        filterBonus:       'Filtrera efter bonusar...',
+        noInput:           'Inga indata.',
+        noData:            'Inga giltiga data.',
+        tableHeaders: [
+          'Auktionsnummer',
+          'Säljare',
+          'Antal',
+          'Föremål',
+          'Bonusar',
+          'Pris (TC)',
+          'Enhetspris (TC)',
+          'Kommando'
+        ],
+        copy:     'Kopiera',
+        copied:   'Kopierat!'
       }
     };
 
@@ -185,8 +250,8 @@
 
     function updateLanguage() {
       const t = i18n[currentLang];
-      document.documentElement.lang          = currentLang;
-      document.title                        = t.title;
+      document.documentElement.lang = currentLang === 'pt' ? 'pt-BR' : currentLang;
+      document.title = t.title;
       document.getElementById('mainHeading').textContent   = t.heading;
       document.getElementById('byline').textContent        = t.byline;
       document.getElementById('instruction').textContent   = t.instruction;
@@ -196,13 +261,10 @@
       document.getElementById('processButton').textContent = t.processButton;
       document.getElementById('filterInput').placeholder   = t.filterName;
       document.getElementById('bonusFilterInput').placeholder = t.filterBonus;
-      // jeśli już był render – odśwież
       renderTable();
     }
 
-    // po załadowaniu DOM
     document.addEventListener('DOMContentLoaded', () => {
-      // ustaw select i eventy
       const langSelect = document.getElementById('langSelect');
       langSelect.value = currentLang;
       langSelect.addEventListener('change', e => {
@@ -213,7 +275,6 @@
       document.getElementById("processButton")
               .addEventListener("click", processData);
 
-      // pierwszy render
       updateLanguage();
     });
 
@@ -249,7 +310,15 @@
         const bonuses      = bonusMatches.map(m=>`[${m[1].trim()}]`).join(" ");
         const name         = mid.replace(/\[.*?\]/g,"").trim();
         if (!prices[name]) prices[name] = [];
-        prices[name].push({ auction:"#"+id, seller, qty, bonus: bonuses, total, unit, cmd });
+        prices[name].push({
+          auction: "#" + id,
+          seller,
+          qty,
+          bonus: bonuses,
+          total,
+          unit,
+          cmd
+        });
       });
 
       renderTable();
@@ -268,7 +337,8 @@
       }
 
       const tbl   = document.createElement("table");
-      const ths   = i18n[currentLang].tableHeaders.map(h=>`<th>${h}</th>`).join("");
+      const ths   = i18n[currentLang].tableHeaders
+        .map(h => `<th>${h}</th>`).join("");
       tbl.innerHTML = `<tr>${ths}</tr>`;
 
       items.forEach(name => {
@@ -284,7 +354,7 @@
           const vals = [
             e.auction,
             e.seller,
-            e.qty+"x",
+            e.qty + "x",
             name,
             e.bonus,
             e.total,
@@ -303,11 +373,11 @@
           const btn = document.createElement("button");
           btn.className = "copy-button";
           btn.textContent = i18n[currentLang].copy;
-          btn.onclick = ()=>{
-            navigator.clipboard.writeText(e.cmd).then(()=>{
+          btn.onclick = () => {
+            navigator.clipboard.writeText(e.cmd).then(() => {
               const old = btn.textContent;
               btn.textContent = i18n[currentLang].copied;
-              setTimeout(()=>btn.textContent=old,1500);
+              setTimeout(() => btn.textContent = old, 1500);
             });
           };
           row.cells[7].appendChild(document.createTextNode(" "));
@@ -322,3 +392,4 @@
   </script>
 </body>
 </html>
+```
