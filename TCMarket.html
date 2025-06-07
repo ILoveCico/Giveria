@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC Market Prices v1.5.0</title> <!-- Zaktualizowano wersję -->
+    <title>TC Market Prices v1.5.1</title> <!-- Zaktualizowano wersję -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -70,11 +70,14 @@
     </style>
 </head>
 <body>
-    <h1>TC Market Prices v1.5.0</h1> <!-- Zaktualizowano wersję -->
+    <h1>TC Market Prices v1.5.1</h1> <!-- Zaktualizowano wersję -->
 
     <p>
         Ta tabela przedstawia aktualne ceny przedmiotów na TC Market.  
+        <strong>Jak interpretować dane?</strong>
         <ul>
+            <li><strong>Ilość:</strong> Liczba przedmiotów sprzedawanych w paczce (np. 10x oznacza 10 sztuk).</li>
+            <li><strong>Bonusy:</strong> Specjalne właściwości przedmiotu, np. [ml.+2%] oznacza bonus do magicznego poziomu.</li>
             <li><strong>Najniższa cena:</strong> Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</li>
             <li><strong>Cena za sztukę:</strong> Koszt jednostkowy dla każdego przedmiotu zostanie wyświetlony w drugiej tabeli.</li>
         </ul>
@@ -105,11 +108,12 @@
                     const item = match[3].trim();
                     const bonuses = match[4] ? match[4].trim() : "";
                     const price = parseInt(match[5]); // Cena jako liczba
+                    const unitPrice = (price / quantity).toFixed(2); // Obliczenia jednostkowe
 
                     if (!prices[item]) {
                         prices[item] = [];
                     }
-                    prices[item].push({ auctionNumber, quantity, bonuses, price, unitPrice: (price / quantity).toFixed(2) });
+                    prices[item].push({ auctionNumber, quantity, bonuses, price, unitPrice });
                 }
             });
 
