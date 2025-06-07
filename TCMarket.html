@@ -42,7 +42,7 @@
         }
         table {
             border-collapse: collapse;
-            width: 60%;
+            width: 80%;
             background-color: white;
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
         }
@@ -65,14 +65,18 @@
             prices = {};
 
             lines.forEach(entry => {
-                const match = entry.match(/1x (.+?) - Price: (\d+) Tibia Coins/);
+                const match = entry.match(/
+
+\[(TC Market)] #(\d+): 1x (.+?) - Price: (\d+) Tibia Coins/);
                 if (match) {
-                    const item = match[1];
-                    const price = match[2];
+                    const auctionNumber = `#${match[2]}`;
+                    const item = match[3];
+                    const price = match[4];
+
                     if (!prices[item]) {
                         prices[item] = [];
                     }
-                    prices[item].push(price);
+                    prices[item].push({ auctionNumber, price });
                 }
             });
 
@@ -82,31 +86,39 @@
         function renderTable() {
             const filterText = document.getElementById("filterInput").value.toLowerCase();
             const output = document.getElementById("output");
-            output.innerHTML = ""; 
+            output.innerHTML = "";
 
             const sortedItems = Object.keys(prices).sort();
 
             if (sortedItems.length > 0) {
                 const table = document.createElement("table");
                 const headerRow = document.createElement("tr");
+                const headerAuction = document.createElement("th");
+                headerAuction.textContent = "Numer Aukcji";
                 const headerItem = document.createElement("th");
                 headerItem.textContent = "Przedmiot";
                 const headerPrice = document.createElement("th");
                 headerPrice.textContent = "Cena";
+                headerRow.appendChild(headerAuction);
                 headerRow.appendChild(headerItem);
                 headerRow.appendChild(headerPrice);
                 table.appendChild(headerRow);
 
                 sortedItems.forEach(item => {
                     if (item.toLowerCase().includes(filterText)) {
-                        const row = document.createElement("tr");
-                        const itemCell = document.createElement("td");
-                        itemCell.textContent = item;
-                        const priceCell = document.createElement("td");
-                        priceCell.textContent = prices[item].join(", ") + " Tibia Coins";
-                        row.appendChild(itemCell);
-                        row.appendChild(priceCell);
-                        table.appendChild(row);
+                        prices[item].forEach(({ auctionNumber, price }) => {
+                            const row = document.createElement("tr");
+                            const auctionCell = document.createElement("td");
+                            auctionCell.textContent = auctionNumber;
+                            const itemCell = document.createElement("td");
+                            itemCell.textContent = item;
+                            const priceCell = document.createElement("td");
+                            priceCell.textContent = `${price} Tibia Coins`;
+                            row.appendChild(auctionCell);
+                            row.appendChild(itemCell);
+                            row.appendChild(priceCell);
+                            table.appendChild(row);
+                        });
                     }
                 });
 
