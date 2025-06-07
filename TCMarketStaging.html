@@ -1,90 +1,50 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>TC Market Prices v1.9.0</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>TC Market Prices v1.9.1</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background:#f4f4f4;
-      text-align:center;
-      padding:20px;
-    }
+    body { font-family: Arial; background:#f4f4f4; text-align:center; padding:20px }
     h1 { color:#333 }
-    p {
-      font-size:16px;
-      color:#555;
-      max-width:800px;
-      margin:auto;
-      text-align:left;
-    }
+    p { font-size:16px; color:#555; max-width:800px; margin:auto; text-align:left }
     textarea, input[type=text] {
-      width:80%;
-      padding:10px;
-      margin:10px 0;
-      border:1px solid #ccc;
-      border-radius:5px;
-      font-size:16px;
+      width:80%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:5px; font-size:16px
     }
     button {
-      margin:10px 0;
-      padding:10px 20px;
-      font-size:16px;
-      background:#28a745;
-      color:#fff;
-      border:none;
-      border-radius:5px;
-      cursor:pointer;
+      padding:10px 20px; font-size:16px;
+      background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer; margin-bottom:10px
     }
     button:hover { background:#218838 }
     .copy-button {
-      margin-left:5px;
-      padding:4px 8px;
-      font-size:13px;
-      background:#007bff;
-      color:#fff;
-      border:none;
-      border-radius:4px;
-      cursor:pointer;
+      margin-left:5px; padding:4px 8px; font-size:13px;
+      background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer
     }
     .copy-button:hover { background:#0056b3 }
-    .table-container {
-      margin-top:20px;
-      display:flex;
-      justify-content:center;
-    }
+    .table-container { margin-top:20px; display:flex; justify-content:center }
     table {
-      border-collapse:collapse;
-      width:90%;
-      background:#fff;
-      box-shadow:0 0 10px rgba(0,0,0,0.1);
+      border-collapse:collapse; width:90%;
+      background:#fff; box-shadow:0 0 10px rgba(0,0,0,0.1)
     }
-    th, td {
-      border:1px solid #ddd;
-      padding:8px;
-      text-align:center;
-    }
-    th {
-      background:#007bff;
-      color:#fff;
-    }
-    .lowest-price { background:#ffdd57 }    /* żółte */
-    .best-unit-price { background:#90ee90 } /* jasno-zielone */
+    th, td { border:1px solid #ddd; padding:8px; text-align:center }
+    th { background:#007bff; color:#fff }
+    .lowest-price    { background:#ffdd57 }  /* żółte */
+    .best-unit-price { background:#90ee90 }  /* jasno-zielone */
   </style>
 </head>
 <body>
 
-  <h1>TC Market Prices v1.9.0</h1>
+  <h1>TC Market Prices v1.9.1</h1>
   <p>
-    Wklej listę aukcji w formacie:<br/>
-    <code>[TC Market] #123: (by Sprzedawca) 10x Nazwa Przedmiotu [bonus] - Price: 400 Tibia Coins</code><br/>
-    Filtrowanie: fragment nazwy lub bonusu.
+    Wklej w tym polu listę aukcji w formacie:<br/>
+    <code>[TC Market] #123: (by Sprzedawca) 10x Nazwa Przedmiotu [bonus1] [bonus2] ... - Price: 400 Tibia Coins</code><br/>
+    Użyj filtrów, aby odsiać aukcje po nazwie i po bonusach.
   </p>
-  <textarea id="dataInput" rows="6" placeholder="Wklej tu aukcje..."></textarea><br/>
+
+  <textarea id="dataInput" rows="6" placeholder="Wklej tu swoje aukcje..."></textarea><br/>
   <button id="processButton">Przetwórz dane</button><br/>
-  <input id="filterInput" type="text" placeholder="Filtruj po nazwie..." oninput="renderTable()">
-  <input id="bonusFilterInput" type="text" placeholder="Filtruj po bonusach..." oninput="renderTable()">
+  <input id="filterInput" type="text" placeholder="Filtruj po nazwie przedmiotu..." oninput="renderTable()"/>
+  <input id="bonusFilterInput" type="text" placeholder="Filtruj po bonusach..." oninput="renderTable()"/>
 
   <div class="table-container">
     <div id="output"></div>
@@ -105,35 +65,56 @@
       }
 
       prices = {};
-      const lineRegex = /\[TC Market\]\s*#(\d+):\s*(?:\(by\s*([^)]+)\)\s*)?(\d+)x\s*(.+?)\s*-\s*Price:\s*(\d+)\s*Tibia\s*Coins/i;
       raw.split("\n").forEach(line => {
-        const m = line.match(lineRegex);
-        if (!m) return;
+        const txt = line.trim();
+        if (!txt) return;
 
-        const id       = m[1];
-        const seller   = m[2] ? m[2].trim() : "";
-        const qty      = parseInt(m[3], 10);
-        const rest     = m[4].trim();
-        const total    = parseInt(m[5], 10);
-        const unit     = Math.floor(total / qty);
-        const cmd      = `!market buy, ${id}`;
+        // 1) Numer aukcji
+        const idM = txt.match(/
 
-        // wydziel nazwę i bonus
-        let name  = rest;
-        let bonus = "";
-        const b = rest.match(/\[([^\]]+)\]/);
-        if (b) {
-          bonus = `[${b[1].trim()}]`;
-          name  = rest.replace(/\[.*\]/, "").trim();
-        }
+\[TC Market\]
 
+\s*#(\d+):/i);
+        if (!idM) return;
+        const id = idM[1];
+
+        // 2) Wystawiający (opcjonalnie)
+        const sellM = txt.match(/\(by\s*([^)]+)\)/i);
+        const seller = sellM ? sellM[1].trim() : "";
+
+        // 3) Ilość
+        const qtyM = txt.match(/(\d+)x/i);
+        if (!qtyM) return;
+        const qty = parseInt(qtyM[1], 10);
+
+        // 4) Cena całkowita
+        const priceM = txt.match(/Price:\s*(\d+)\s*Tibia\s*Coins/i);
+        if (!priceM) return;
+        const total = parseInt(priceM[1], 10);
+
+        // 5) Komenda i cena za sztukę
+        const cmd  = `!market buy, ${id}`;
+        const unit = Math.floor(total / qty);
+
+        // 6) Wyciągamy część między "10x" a "- Price"
+        const midStart = txt.indexOf(qtyM[0]) + qtyM[0].length;
+        const midEnd   = txt.indexOf("- Price");
+        let mid        = txt.slice(midStart, midEnd).trim();
+
+        // 7) Z mid wydzielamy wszystkie bonusy
+        const bonusMatches = [...mid.matchAll(/\[([^\]]+)\]/g)];
+        const bonuses = bonusMatches.map(m => `[${m[1].trim()}]`).join(" ");
+
+        // 8) Z mid usuwamy bonusy, zostaje nazwa
+        const name = mid.replace(/\[.*?\]/g, "").trim();
+
+        // 9) Zapis do struktury
         if (!prices[name]) prices[name] = [];
         prices[name].push({
           auction: "#" + id,
           seller,
           qty,
-          name,
-          bonus,
+          bonus: bonuses,
           total,
           unit,
           cmd
@@ -174,9 +155,9 @@
         const minUnit  = Math.min(...group.map(e => e.unit));
 
         group.forEach(e => {
-          // filtr nazwy
+          // filtr po nazwie
           if (!name.toLowerCase().includes(fText)) return;
-          // filtr bonusu
+          // filtr po bonusach
           if (bText && !e.bonus.toLowerCase().includes(bText)) return;
 
           const row = document.createElement("tr");
@@ -184,7 +165,7 @@
             e.auction,
             e.seller,
             e.qty + "x",
-            e.name,
+            name,
             e.bonus,
             e.total,
             e.unit,
@@ -199,7 +180,7 @@
             row.appendChild(td);
           });
 
-          // przycisk kopiowania w ostatniej komórce
+          // dodaj przycisk "Kopiuj"
           const btn = document.createElement("button");
           btn.className = "copy-button";
           btn.textContent = "Kopiuj";
@@ -220,6 +201,5 @@
       out.appendChild(tbl);
     }
   </script>
-
 </body>
 </html>
