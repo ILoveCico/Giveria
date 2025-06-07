@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC Market Prices v1.7.0</title> <!-- Zaktualizowano wersję -->
+    <title>TC Market Prices v1.8.0</title> <!-- Zaktualizowano wersję -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -80,7 +80,7 @@
     </style>
 </head>
 <body>
-    <h1>TC Market Prices v1.7.0</h1> <!-- Zaktualizowano wersję -->
+    <h1>TC Market Prices v1.8.0</h1> <!-- Zaktualizowano wersję -->
 
     <p>
         Ta tabela przedstawia aktualne ceny przedmiotów na TC Market.  
@@ -90,6 +90,7 @@
             <li><strong>Bonusy:</strong> Specjalne właściwości przedmiotu, np. [ml.+2%] oznacza bonus do magicznego poziomu.</li>
             <li><strong>Najniższa cena:</strong> Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</li>
             <li><strong>Cena za sztukę:</strong> Koszt jednostkowy dla każdego przedmiotu.</li>
+            <li><strong>Wystawiający:</strong> Osoba, która wystawiła aukcję, pobrana z "(by X)".</li>
             <li><strong>Kopiowanie komendy:</strong> Kliknij przycisk, aby skopiować komendę zakupu (!market buy, x).</li>
         </ul>
     </p>
@@ -111,20 +112,21 @@
             prices = {};
 
             lines.forEach(entry => {
-                const match = entry.match(/\[TC Market\] #(\d+):\s(\d+)x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
+                const match = entry.match(/\[TC Market\] #(\d+): \(by ([^)]+)\) (\d+)x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
                 if (match) {
                     const auctionNumber = `#${match[1]}`;
-                    const quantity = parseInt(match[2]);
-                    const item = match[3].trim();
-                    const bonuses = match[4] ? match[4].trim() : "";
-                    const price = parseFloat(match[5]);
+                    const seller = match[2]; // Pobranie wystawiającego
+                    const quantity = parseInt(match[3]);
+                    const item = match[4].trim();
+                    const bonuses = match[5] ? match[5].trim() : "";
+                    const price = parseFloat(match[6]);
                     const unitPrice = (price / quantity).toFixed(2);
                     const marketCommand = `!market buy, ${match[1]}`;
 
                     if (!prices[item]) {
                         prices[item] = [];
                     }
-                    prices[item].push({ auctionNumber, quantity, bonuses, price, unitPrice, marketCommand });
+                    prices[item].push({ auctionNumber, seller, quantity, bonuses, price, unitPrice, marketCommand });
                 }
             });
 
@@ -151,12 +153,12 @@
             if (sortedItems.length > 0) {
                 const table = document.createElement("table");
 
-                table.innerHTML = "<tr><th>Numer Aukcji</th><th>Ilość</th><th>Przedmiot</th><th>Bonusy</th><th>Cena</th><th>Cena za sztukę</th><th>Komenda</th></tr>";
+                table.innerHTML = "<tr><th>Numer Aukcji</th><th>Wystawiający</th><th>Ilość</th><th>Przedmiot</th><th>Bonusy</th><th>Cena</th><th>Cena za sztukę</th><th>Komenda</th></tr>";
 
                 sortedItems.forEach(item => {
                     let minPrice = Math.min(...prices[item].map(p => p.price));
 
-                    prices[item].forEach(({ auctionNumber, quantity, bonuses, price, unitPrice, marketCommand }) => {
+                    prices[item].forEach(({ auctionNumber, seller, quantity, bonuses, price, unitPrice, marketCommand }) => {
                         if (
                             item.toLowerCase().includes(filterText) &&
                             (bonuses.toLowerCase().includes(bonusFilterText) || bonusFilterText === "")
@@ -170,6 +172,7 @@
 
                             row.innerHTML = `
                                 <td>${auctionNumber}</td>
+                                <td>${seller}</td>
                                 <td>${quantity}</td>
                                 <td>${item}</td>
                                 <td>${bonuses ? bonuses : ""}</td>
@@ -178,7 +181,7 @@
                                 <td>${marketCommand} </td>
                             `;
 
-                            row.cells[6].appendChild(copyButton);
+                            row.cells[7].appendChild(copyButton);
                             table.appendChild(row);
                         }
                     });
