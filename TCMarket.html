@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC Market Prices v1.4.0</title> <!-- Zaktualizowano wersję -->
+    <title>TC Market Prices v1.5.0</title> <!-- Zaktualizowano wersję -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -46,12 +46,14 @@
             margin-top: 20px;
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
         }
         table {
             border-collapse: collapse;
-            width: 80%;
+            width: 45%;
             background-color: white;
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            margin: 10px;
         }
         th, td {
             border: 1px solid #ddd;
@@ -68,11 +70,14 @@
     </style>
 </head>
 <body>
-    <h1>TC Market Prices v1.4.0</h1> <!-- Zaktualizowano wersję -->
+    <h1>TC Market Prices v1.5.0</h1> <!-- Zaktualizowano wersję -->
 
     <p>
         Ta tabela przedstawia aktualne ceny przedmiotów na TC Market.  
-        <strong>Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</strong>
+        <ul>
+            <li><strong>Najniższa cena:</strong> Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</li>
+            <li><strong>Cena za sztukę:</strong> Koszt jednostkowy dla każdego przedmiotu zostanie wyświetlony w drugiej tabeli.</li>
+        </ul>
     </p>
 
     <textarea id="dataInput" placeholder="Wpisz tutaj dane..."></textarea><br>
@@ -81,6 +86,7 @@
     <input id="bonusFilterInput" type="text" placeholder="Filtruj według bonusów..." oninput="renderTable()">
     <div class="table-container">
         <div id="output"></div>
+        <div id="unitPriceOutput"></div> <!-- Druga tabela -->
     </div>
 
     <script>
@@ -95,15 +101,15 @@
                 const match = entry.match(/\[TC Market\] #(\d+):\s(\d+)x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
                 if (match) {
                     const auctionNumber = `#${match[1]}`;
-                    const quantity = match[2]; // Ilość przedmiotów
+                    const quantity = parseInt(match[2]); // Ilość przedmiotów jako liczba
                     const item = match[3].trim();
                     const bonuses = match[4] ? match[4].trim() : "";
-                    const price = parseInt(match[5]); // Zmieniam na liczbę
+                    const price = parseInt(match[5]); // Cena jako liczba
 
                     if (!prices[item]) {
                         prices[item] = [];
                     }
-                    prices[item].push({ auctionNumber, quantity, bonuses, price });
+                    prices[item].push({ auctionNumber, quantity, bonuses, price, unitPrice: (price / quantity).toFixed(2) });
                 }
             });
 
@@ -114,68 +120,44 @@
             const filterText = document.getElementById("filterInput").value.toLowerCase();
             const bonusFilterText = document.getElementById("bonusFilterInput").value.toLowerCase();
             const output = document.getElementById("output");
+            const unitPriceOutput = document.getElementById("unitPriceOutput");
             output.innerHTML = "";
+            unitPriceOutput.innerHTML = "";
 
             const sortedItems = Object.keys(prices).sort();
 
             if (sortedItems.length > 0) {
                 const table = document.createElement("table");
-                const headerRow = document.createElement("tr");
-                const headerAuction = document.createElement("th");
-                const headerQuantity = document.createElement("th");
-                const headerItem = document.createElement("th");
-                const headerBonus = document.createElement("th");
-                const headerPrice = document.createElement("th");
-                headerAuction.textContent = "Numer Aukcji";
-                headerQuantity.textContent = "Ilość";
-                headerItem.textContent = "Przedmiot";
-                headerBonus.textContent = "Bonusy";
-                headerPrice.textContent = "Cena";
-                headerRow.appendChild(headerAuction);
-                headerRow.appendChild(headerQuantity);
-                headerRow.appendChild(headerItem);
-                headerRow.appendChild(headerBonus);
-                headerRow.appendChild(headerPrice);
-                table.appendChild(headerRow);
+                const unitPriceTable = document.createElement("table");
+
+                table.innerHTML = "<tr><th>Numer Aukcji</th><th>Ilość</th><th>Przedmiot</th><th>Bonusy</th><th>Cena</th></tr>";
+                unitPriceTable.innerHTML = "<tr><th>Numer Aukcji</th><th>Przedmiot</th><th>Cena za sztukę</th></tr>";
 
                 sortedItems.forEach(item => {
-                    let minPrice = Math.min(...prices[item].map(p => p.price)); // Znajduję najniższą cenę w danej kategorii
+                    let minPrice = Math.min(...prices[item].map(p => p.price)); // Najniższa cena w kategorii
 
-                    prices[item].forEach(({ auctionNumber, quantity, bonuses, price }) => {
+                    prices[item].forEach(({ auctionNumber, quantity, bonuses, price, unitPrice }) => {
                         if (
                             item.toLowerCase().includes(filterText) &&
                             (bonuses.toLowerCase().includes(bonusFilterText) || bonusFilterText === "")
                         ) {
                             const row = document.createElement("tr");
-                            const auctionCell = document.createElement("td");
-                            const quantityCell = document.createElement("td");
-                            const itemCell = document.createElement("td");
-                            const bonusCell = document.createElement("td");
-                            const priceCell = document.createElement("td");
-                            auctionCell.textContent = auctionNumber;
-                            quantityCell.textContent = quantity;
-                            itemCell.textContent = item;
-                            bonusCell.textContent = bonuses ? bonuses : ""; // Pusta komórka zamiast "Brak"
-                            priceCell.textContent = `${price} Tibia Coins`;
+                            const unitPriceRow = document.createElement("tr");
 
-                            // Podświetlam najniższą cenę
-                            if (price === minPrice) {
-                                priceCell.classList.add("lowest-price");
-                            }
+                            row.innerHTML = `<td>${auctionNumber}</td><td>${quantity}</td><td>${item}</td><td>${bonuses ? bonuses : ""}</td><td ${price === minPrice ? 'class="lowest-price"' : ""}>${price} Tibia Coins</td>`;
+                            unitPriceRow.innerHTML = `<td>${auctionNumber}</td><td>${item}</td><td>${unitPrice} Tibia Coins</td>`;
 
-                            row.appendChild(auctionCell);
-                            row.appendChild(quantityCell);
-                            row.appendChild(itemCell);
-                            row.appendChild(bonusCell);
-                            row.appendChild(priceCell);
                             table.appendChild(row);
+                            unitPriceTable.appendChild(unitPriceRow);
                         }
                     });
                 });
 
                 output.appendChild(table);
+                unitPriceOutput.appendChild(unitPriceTable);
             } else {
                 output.innerHTML = "<p>Brak poprawnych danych.</p>";
+                unitPriceOutput.innerHTML = "<p>Brak danych do obliczenia ceny za sztukę.</p>";
             }
         }
 
