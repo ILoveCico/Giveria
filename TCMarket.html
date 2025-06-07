@@ -122,4 +122,28 @@
                             const row = document.createElement("tr");
                             const auctionCell = document.createElement("td");
                             const itemCell = document.createElement("td");
-                            const bonusCell
+                            const bonusCell = document.createElement("td");
+                            const priceCell = document.createElement("td");
+                            auctionCell.textContent = auctionNumber;
+                            itemCell.textContent = item;
+                            bonusCell.textContent = bonuses;
+                            priceCell.textContent = `${price} Tibia Coins`;
+                            row.appendChild(auctionCell);
+                            row.appendChild(itemCell);
+                            row.appendChild(bonusCell);
+                            row.appendChild(priceCell);
+                            table.appendChild(row);
+                        });
+                    }
+                });
+
+                output.appendChild(table);
+            } else {
+                output.innerHTML = "<p>Brak poprawnych danych.</p>";
+            }
+        }
+
+        document.getElementById("processButton").addEventListener("click", processData);
+    </script>
+</body>
+</html>
