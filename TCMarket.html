@@ -67,11 +67,13 @@
             lines.forEach(entry => {
                 const match = entry.match(/
 
-\[(TC Market)] #(\d+): 1x (.+?) - Price: (\d+) Tibia Coins/);
+\[TC Market\]
+
+ #(\d+): 1x (.+?) - Price: (\d+) Tibia Coins/);
                 if (match) {
-                    const auctionNumber = `#${match[2]}`;
-                    const item = match[3];
-                    const price = match[4];
+                    const auctionNumber = `#${match[1]}`;
+                    const item = match[2];
+                    const price = match[3];
 
                     if (!prices[item]) {
                         prices[item] = [];
