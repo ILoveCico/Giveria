@@ -116,12 +116,15 @@
   </div>
 
   <script>
-    // Słownik tłumaczeń
+    // 1) Hoist prices to top so it's available in updateLanguage/renderTable
+    let prices = {};
+
+    // 2) i18n dictionary
     const i18n = {
       pl: {
-        title:     'GCMM v1.8.0 by Tralalero Tralala',
-        heading:   'Giveria Coin Market Manager v1.8.0',
-        byline:    'by Tralalero Tralala',
+        title:      'GCMM v1.8.0 by Tralalero Tralala',
+        heading:    'Giveria Coin Market Manager v1.8.0',
+        byline:     'by Tralalero Tralala',
         instruction:
           'Wklej w tym polu listę aukcji w formacie:',
         codeSample:
@@ -129,11 +132,11 @@
         codeLabel:
           'Użyj filtrów, aby odsiać aukcje po nazwie i po bonusach.',
         placeholderData:   'Wklej tu swoje aukcje...',
-        processButton:    'Przetwórz dane',
-        filterName:       'Filtruj po nazwie przedmiotu...',
-        filterBonus:      'Filtruj po bonusach...',
-        noInput:          'Brak danych wejściowych.',
-        noData:           'Brak poprawnych danych.',
+        processButton:     'Przetwórz dane',
+        filterName:        'Filtruj po nazwie przedmiotu...',
+        filterBonus:       'Filtruj po bonusach...',
+        noInput:           'Brak danych wejściowych.',
+        noData:            'Brak poprawnych danych.',
         tableHeaders: [
           'Numer aukcji',
           'Wystawiający',
@@ -148,9 +151,9 @@
         copied:   'Skopiowano!'
       },
       en: {
-        title:     'GCMM v1.8.0 by Tralalero Tralala',
-        heading:   'Giveria Coin Market Manager v1.8.0',
-        byline:    'by Tralalero Tralala',
+        title:      'GCMM v1.8.0 by Tralalero Tralala',
+        heading:    'Giveria Coin Market Manager v1.8.0',
+        byline:     'by Tralalero Tralala',
         instruction:
           'Paste the list of auctions in the following format:',
         codeSample:
@@ -158,11 +161,11 @@
         codeLabel:
           'Use filters to narrow down auctions by name and bonuses.',
         placeholderData:   'Paste your auctions here...',
-        processButton:    'Process data',
-        filterName:       'Filter by item name...',
-        filterBonus:      'Filter by bonuses...',
-        noInput:          'No input data.',
-        noData:           'No valid data.',
+        processButton:     'Process data',
+        filterName:        'Filter by item name...',
+        filterBonus:       'Filter by bonuses...',
+        noInput:           'No input data.',
+        noData:            'No valid data.',
         tableHeaders: [
           'Auction number',
           'Seller',
@@ -178,17 +181,12 @@
       }
     };
 
-    // aktualny język
     let currentLang = 'pl';
 
-    // funkcja zmiany tekstów
     function updateLanguage() {
       const t = i18n[currentLang];
-      // atrybut <html lang>
-      document.documentElement.lang = currentLang;
-      // tytuł zakładki
-      document.title = t.title;
-      // statyczne elementy
+      document.documentElement.lang          = currentLang;
+      document.title                        = t.title;
       document.getElementById('mainHeading').textContent   = t.heading;
       document.getElementById('byline').textContent        = t.byline;
       document.getElementById('instruction').textContent   = t.instruction;
@@ -198,25 +196,26 @@
       document.getElementById('processButton').textContent = t.processButton;
       document.getElementById('filterInput').placeholder   = t.filterName;
       document.getElementById('bonusFilterInput').placeholder = t.filterBonus;
-      // jeśli tabela już jest wyrenderowana – odśwież ją
+      // jeśli już był render – odśwież
       renderTable();
     }
 
-    // nasłuchiwanie na zmianę języka
-    document.getElementById('langSelect')
-            .addEventListener('change', e => {
-      currentLang = e.target.value;
+    // po załadowaniu DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      // ustaw select i eventy
+      const langSelect = document.getElementById('langSelect');
+      langSelect.value = currentLang;
+      langSelect.addEventListener('change', e => {
+        currentLang = e.target.value;
+        updateLanguage();
+      });
+
+      document.getElementById("processButton")
+              .addEventListener("click", processData);
+
+      // pierwszy render
       updateLanguage();
     });
-
-    // odpalamy raz przy starcie
-    updateLanguage();
-
-    // #######################################################
-    // reszta kodu – bez zmian funkcjonalnych, ale z użyciem i18n
-    let prices = {};
-    document.getElementById("processButton")
-            .addEventListener("click", processData);
 
     function processData() {
       const raw = document.getElementById("dataInput").value.trim();
@@ -228,33 +227,27 @@
 
       prices = {};
       raw.split("\n").forEach(line => {
-        const txt = line.trim();
-        if (!txt) return;
-        const idM     = txt.match(/\[TC Market\]\s*#(\d+):/i);
-        const sellM   = txt.match(/\(by\s*([^)]+)\)/i);
-        const qtyM    = txt.match(/(\d+)x/i);
-        const priceM  = txt.match(/Price:\s*(\d+)\s*Tibia\s*Coins/i);
+        const txt   = line.trim();
+        const idM   = txt.match(/\[TC Market\]\s*#(\d+):/i);
+        const sellM = txt.match(/\(by\s*([^)]+)\)/i);
+        const qtyM  = txt.match(/(\d+)x/i);
+        const priceM= txt.match(/Price:\s*(\d+)\s*Tibia\s*Coins/i);
         if (!idM||!qtyM||!priceM) return;
 
-        const id      = idM[1];
-        const seller  = sellM ? sellM[1].trim() : "";
-        const qty     = parseInt(qtyM[1],10);
-        const total   = parseInt(priceM[1],10);
-        const unit    = Math.floor(total/qty);
-        const cmd     = `!market buy, ${id}`;
+        const id     = idM[1];
+        const seller = sellM ? sellM[1].trim() : "";
+        const qty    = parseInt(qtyM[1],10);
+        const total  = parseInt(priceM[1],10);
+        const unit   = Math.floor(total/qty);
+        const cmd    = `!market buy, ${id}`;
 
-        // wyciągamy fragment nazwy + bonusy
         const midStart = txt.indexOf(qtyM[0]) + qtyM[0].length;
         const midEnd   = txt.indexOf("- Price");
         const mid      = txt.slice(midStart,midEnd).trim();
 
-        // zbieramy wszystkie bonusy
         const bonusMatches = [...mid.matchAll(/\[([^\]]+)\]/g)];
         const bonuses      = bonusMatches.map(m=>`[${m[1].trim()}]`).join(" ");
-
-        // usuwamy bonusy, zostaje nazwa
-        const name = mid.replace(/\[.*?\]/g,"").trim();
-
+        const name         = mid.replace(/\[.*?\]/g,"").trim();
         if (!prices[name]) prices[name] = [];
         prices[name].push({ auction:"#"+id, seller, qty, bonus: bonuses, total, unit, cmd });
       });
@@ -274,11 +267,8 @@
         return;
       }
 
-      // tworzę tabelę
-      const tbl = document.createElement("table");
-      // nagłówki
-      const ths = i18n[currentLang].tableHeaders
-        .map(h => `<th>${h}</th>`).join("");
+      const tbl   = document.createElement("table");
+      const ths   = i18n[currentLang].tableHeaders.map(h=>`<th>${h}</th>`).join("");
       tbl.innerHTML = `<tr>${ths}</tr>`;
 
       items.forEach(name => {
@@ -287,11 +277,10 @@
         const minUnit  = Math.min(...group.map(e=>e.unit));
 
         group.forEach(e => {
-          // filtry
           if (!name.toLowerCase().includes(fText)) return;
           if (bText && !e.bonus.toLowerCase().includes(bText)) return;
 
-          const row = document.createElement("tr");
+          const row  = document.createElement("tr");
           const vals = [
             e.auction,
             e.seller,
@@ -311,11 +300,10 @@
             row.appendChild(td);
           });
 
-          // przycisk kopiowania
           const btn = document.createElement("button");
           btn.className = "copy-button";
           btn.textContent = i18n[currentLang].copy;
-          btn.onclick = () => {
+          btn.onclick = ()=>{
             navigator.clipboard.writeText(e.cmd).then(()=>{
               const old = btn.textContent;
               btn.textContent = i18n[currentLang].copied;
