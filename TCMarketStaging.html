@@ -3,79 +3,55 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TC Market Prices v1.8.3</title>
+  <title>TC Market Prices v1.8.4</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background: #f4f4f4;
       text-align: center;
       padding: 20px;
     }
     h1 { color: #333; }
-    p {
-      font-size: 16px; color: #555;
-      max-width: 800px; margin: auto; text-align: left;
+    p { font-size:16px; color:#555; max-width:800px; margin:auto; text-align:left; }
+    textarea, input[type="text"] {
+      width:80%; padding:10px; margin-top:10px;
+      border:1px solid #ccc; border-radius:5px; font-size:16px;
     }
-    textarea, input {
-      width: 80%; padding: 10px; margin-top: 10px;
-      border: 1px solid #ccc; border-radius: 5px;
-      font-size: 16px;
+    button { 
+      margin:10px 0; padding:10px 20px; 
+      font-size:16px; background:#28a745; color:#fff;
+      border:none; border-radius:5px; cursor:pointer;
     }
-    button, .copy-button {
-      padding: 8px 12px; font-size: 14px;
-      border: none; border-radius: 4px;
-      cursor: pointer;
-    }
-    button {
-      background-color: #28a745; color: white;
-      margin-top: 10px;
-    }
-    button:hover { background-color: #218838; }
+    button:hover { background:#218838; }
     .copy-button {
-      background-color: #007bff; color: white;
+      margin-left:5px;
+      padding:4px 8px; font-size:13px;
+      background:#007bff; color:#fff; border:none; border-radius:4px;
+      cursor:pointer;
     }
-    .copy-button:hover { background-color: #0056b3; }
-    .table-container {
-      margin-top: 20px; display: flex; justify-content: center;
-    }
+    .copy-button:hover { background:#0056b3; }
+    .table-container { margin-top:20px; display:flex; justify-content:center; }
     table {
-      border-collapse: collapse; width: 90%;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-collapse:collapse; width:90%;
+      background:#fff; box-shadow:0 0 10px rgba(0,0,0,0.1);
     }
     th, td {
-      border: 1px solid #ddd; padding: 8px;
-      text-align: center;
+      border:1px solid #ddd; padding:8px; text-align:center;
     }
-    th {
-      background-color: #007bff; color: white;
-    }
-    .lowest-price {
-      background-color: #ffdd57; /* żółte */
-    }
-    .best-unit-price {
-      background-color: #90ee90; /* jasnozielone */
-    }
+    th { background:#007bff; color:#fff; }
+    .lowest-price { background:#ffdd57; }       /* żółte */
+    .best-unit-price { background:#90ee90; }    /* jasnozielone */
   </style>
 </head>
 <body>
-  <h1>TC Market Prices v1.8.3</h1>
-  <p>
-    Ta tabela przedstawia aktualne ceny przedmiotów na TC Market.<br/>
-    <strong>Odczyt danych:</strong>
-    <ul>
-      <li><strong>Numer aukcji:</strong> #123</li>
-      <li><strong>Wystawiający:</strong> osoba z "(by X)"</li>
-      <li><strong>Ilość:</strong> sztuk w paczce (np. 10x)</li>
-      <li><strong>Przedmiot:</strong> nazwa</li>
-      <li><strong>Bonusy:</strong> np. [ml.+2%]</li>
-      <li><strong>Cena (TC):</strong> łączny koszt; najniższa w grupie żółta</li>
-      <li><strong>Cena za sztukę (TC):</strong> koszt jednostkowy; najlepsza jasno-zielona</li>
-      <li><strong>Komenda:</strong> !market buy, <numer aukcji> + kopiuj</li>
-    </ul>
-  </p>
+  <h1>TC Market Prices v1.8.4</h1>
 
-  <textarea id="dataInput" placeholder="Wklej tu listę aukcji..."></textarea><br/>
+  <p>
+    Wklej linie aukcji w formacie:<br/>
+    <code>[TC Market] #123: (by Sprzedawca) 10x Nazwa Przedmiotu [bonus] - Price: 400 Tibia Coins</code><br/>
+    <strong>Filtrowanie:</strong> wpisz fragment nazwy lub bonusu, aby odsiać pozostałe pozycje.
+  </p>
+  <textarea id="dataInput" rows="6" placeholder="Wklej tu listę aukcji..."></textarea><br/>
   <button id="processButton">Przetwórz dane</button><br/>
   <input id="filterInput" type="text" placeholder="Filtruj po nazwie..." oninput="renderTable()"/>
   <input id="bonusFilterInput" type="text" placeholder="Filtruj po bonusach..." oninput="renderTable()"/>
@@ -89,48 +65,44 @@
 
     function processData() {
       const raw = document.getElementById("dataInput").value.trim();
+      const out = document.getElementById("output");
       if (!raw) {
-        return document.getElementById("output")
-          .innerHTML = "<p>Brak danych wejściowych.</p>";
+        out.innerHTML = "<p>Brak danych wejściowych.</p>";
+        return;
       }
+
       prices = {};
-      const lineRegex = /^\[TC Market\]\s*#(\d+):(?:\s*\(by\s*([^)]+)\))?\s*(\d+)x\s*([^\[\-]+?)(\s*\[[^\]]*\])?\s*-\s*Price:\s*(\d+)\s*Tibia\s*Coins$/;
+      // Uproszczony, opcjonalny "(by X)" + obowiązkowe qty, item, cena
+      const lineRegex = /\[TC Market\]\s*#(\d+):\s*(?:\(by\s*([^)]+)\)\s*)?(\d+)x\s*([^\[\-]+?)\s*(\[[^\]]+\])?\s*-\s*Price:\s*(\d+)\s*Tibia\s*Coins/i;
       raw.split("\n").forEach(line => {
-        const m = line.trim().match(lineRegex);
+        const m = line.match(lineRegex);
         if (!m) return;
         const id     = m[1];
         const seller = m[2] || "";
-        const qty    = parseInt(m[3], 10);
+        const qty    = parseInt(m[3],10);
         const name   = m[4].trim();
         const bonus  = m[5] ? m[5].trim() : "";
-        const total  = parseInt(m[6], 10);
-        const unit   = Math.floor(total / qty);
+        const total  = parseInt(m[6],10);
+        const unit   = Math.floor(total/qty);
         const cmd    = `!market buy, ${id}`;
 
         if (!prices[name]) prices[name] = [];
-        prices[name].push({
-          auction: "#" + id,
-          seller,
-          qty,
-          bonus,
-          total,
-          unit,
-          cmd
-        });
+        prices[name].push({ auction:"#"+id, seller, qty, name, bonus, total, unit, cmd });
       });
 
       renderTable();
     }
 
     function renderTable() {
-      const out = document.getElementById("output");
-      const fText = document.getElementById("filterInput").value.toLowerCase();
-      const bText = document.getElementById("bonusFilterInput").value.toLowerCase();
+      const out    = document.getElementById("output");
+      const fText  = document.getElementById("filterInput").value.toLowerCase();
+      const bText  = document.getElementById("bonusFilterInput").value.toLowerCase();
       out.innerHTML = "";
 
       const items = Object.keys(prices).sort();
       if (!items.length) {
-        return out.innerHTML = "<p>Brak poprawnych danych.</p>";
+        out.innerHTML = "<p>Brak poprawnych danych.</p>";
+        return;
       }
 
       const tbl = document.createElement("table");
@@ -147,9 +119,9 @@
         </tr>`;
 
       items.forEach(name => {
-        const group = prices[name];
-        const minTotal = Math.min(...group.map(e => e.total));
-        const minUnit  = Math.min(...group.map(e => e.unit));
+        const group    = prices[name];
+        const minTotal = Math.min(...group.map(e=>e.total));
+        const minUnit  = Math.min(...group.map(e=>e.unit));
 
         group.forEach(e => {
           if (!name.toLowerCase().includes(fText)) return;
@@ -159,7 +131,7 @@
           const vals = [
             e.auction,
             e.seller,
-            e.qty + "x",
+            e.qty+"x",
             name,
             e.bonus,
             e.total,
@@ -170,25 +142,24 @@
           vals.forEach((v,i) => {
             const td = document.createElement("td");
             td.textContent = v;
-            if (i === 5 && e.total === minTotal) td.classList.add("lowest-price");
-            if (i === 6 && e.unit  === minUnit)  td.classList.add("best-unit-price");
+            if (i===5 && e.total===minTotal) td.classList.add("lowest-price");
+            if (i===6 && e.unit===minUnit)   td.classList.add("best-unit-price");
             row.appendChild(td);
           });
 
-          // dodaj przycisk kopiowania
-          const cmdCell = row.cells[7];
+          // przycisk kopiowania w ostatniej komórce
           const btn = document.createElement("button");
           btn.className = "copy-button";
           btn.textContent = "Kopiuj";
-          btn.onclick = () => {
-            navigator.clipboard.writeText(e.cmd).then(() => {
-              const old = btn.textContent;
-              btn.textContent = "Skopiowano!";
-              setTimeout(() => btn.textContent = old, 2000);
+          btn.onclick = ()=> {
+            navigator.clipboard.writeText(e.cmd).then(()=>{
+              const old=btn.textContent;
+              btn.textContent="Skopiowano!";
+              setTimeout(()=>btn.textContent=old,1500);
             });
           };
-          cmdCell.appendChild(document.createTextNode(" "));
-          cmdCell.appendChild(btn);
+          row.cells[7].appendChild(document.createTextNode(" "));
+          row.cells[7].appendChild(btn);
 
           tbl.appendChild(row);
         });
@@ -197,8 +168,7 @@
       out.appendChild(tbl);
     }
 
-    document.getElementById("processButton")
-      .addEventListener("click", processData);
+    document.getElementById("processButton").addEventListener("click", processData);
   </script>
 </body>
 </html>
