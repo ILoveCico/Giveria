@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC Market Prices v1.6.1</title> <!-- Zaktualizowano wersję -->
+    <title>TC Market Prices v1.7.0</title> <!-- Zaktualizowano wersję -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -49,7 +49,7 @@
         }
         table {
             border-collapse: collapse;
-            width: 80%;
+            width: 90%;
             background-color: white;
             box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
         }
@@ -65,10 +65,22 @@
         .lowest-price {
             background-color: #ffdd57; /* Żółte tło dla najniższej ceny */
         }
+        .copy-button {
+            padding: 5px;
+            font-size: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .copy-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
-    <h1>TC Market Prices v1.6.0</h1> <!-- Zaktualizowano wersję -->
+    <h1>TC Market Prices v1.7.0</h1> <!-- Zaktualizowano wersję -->
 
     <p>
         Ta tabela przedstawia aktualne ceny przedmiotów na TC Market.  
@@ -77,7 +89,8 @@
             <li><strong>Ilość:</strong> Liczba przedmiotów sprzedawanych w paczce (np. 10x oznacza 10 sztuk).</li>
             <li><strong>Bonusy:</strong> Specjalne właściwości przedmiotu, np. [ml.+2%] oznacza bonus do magicznego poziomu.</li>
             <li><strong>Najniższa cena:</strong> Najtańszy przedmiot w każdej kategorii zostanie podświetlony na żółto.</li>
-            <li><strong>Cena za sztukę:</strong> Koszt jednostkowy dla każdego przedmiotu jest wyświetlany w głównej tabeli.</li>
+            <li><strong>Cena za sztukę:</strong> Koszt jednostkowy dla każdego przedmiotu.</li>
+            <li><strong>Kopiowanie komendy:</strong> Kliknij przycisk, aby skopiować komendę zakupu (!market buy, x).</li>
         </ul>
     </p>
 
@@ -101,20 +114,30 @@
                 const match = entry.match(/\[TC Market\] #(\d+):\s(\d+)x\s([^\[\d\-]+)\s?((?:\[.*?\])*)\s-\sPrice:\s(\d+) Tibia Coins/);
                 if (match) {
                     const auctionNumber = `#${match[1]}`;
-                    const quantity = parseInt(match[2]); // Ilość przedmiotów jako liczba
+                    const quantity = parseInt(match[2]);
                     const item = match[3].trim();
                     const bonuses = match[4] ? match[4].trim() : "";
-                    const price = parseFloat(match[5]); // Cena jako liczba
-                    const unitPrice = (price / quantity).toFixed(2); // Obliczenia jednostkowe
+                    const price = parseFloat(match[5]);
+                    const unitPrice = (price / quantity).toFixed(2);
+                    const marketCommand = `!market buy, ${match[1]}`;
 
                     if (!prices[item]) {
                         prices[item] = [];
                     }
-                    prices[item].push({ auctionNumber, quantity, bonuses, price, unitPrice });
+                    prices[item].push({ auctionNumber, quantity, bonuses, price, unitPrice, marketCommand });
                 }
             });
 
             renderTable();
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = "Skopiowano!";
+                setTimeout(() => {
+                    button.textContent = "Kopiuj";
+                }, 2000);
+            });
         }
 
         function renderTable() {
@@ -128,17 +151,22 @@
             if (sortedItems.length > 0) {
                 const table = document.createElement("table");
 
-                table.innerHTML = "<tr><th>Numer Aukcji</th><th>Ilość</th><th>Przedmiot</th><th>Bonusy</th><th>Cena</th><th>Cena za sztukę</th></tr>";
+                table.innerHTML = "<tr><th>Numer Aukcji</th><th>Ilość</th><th>Przedmiot</th><th>Bonusy</th><th>Cena</th><th>Cena za sztukę</th><th>Komenda</th></tr>";
 
                 sortedItems.forEach(item => {
-                    let minPrice = Math.min(...prices[item].map(p => p.price)); // Najniższa cena w kategorii
+                    let minPrice = Math.min(...prices[item].map(p => p.price));
 
-                    prices[item].forEach(({ auctionNumber, quantity, bonuses, price, unitPrice }) => {
+                    prices[item].forEach(({ auctionNumber, quantity, bonuses, price, unitPrice, marketCommand }) => {
                         if (
                             item.toLowerCase().includes(filterText) &&
                             (bonuses.toLowerCase().includes(bonusFilterText) || bonusFilterText === "")
                         ) {
                             const row = document.createElement("tr");
+
+                            const copyButton = document.createElement("button");
+                            copyButton.className = "copy-button";
+                            copyButton.textContent = "Kopiuj";
+                            copyButton.onclick = () => copyToClipboard(marketCommand, copyButton);
 
                             row.innerHTML = `
                                 <td>${auctionNumber}</td>
@@ -147,8 +175,10 @@
                                 <td>${bonuses ? bonuses : ""}</td>
                                 <td ${price === minPrice ? 'class="lowest-price"' : ""}>${price} Tibia Coins</td>
                                 <td>${unitPrice} Tibia Coins</td>
+                                <td>${marketCommand} </td>
                             `;
 
+                            row.cells[6].appendChild(copyButton);
                             table.appendChild(row);
                         }
                     });
