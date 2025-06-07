@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TC Market Prices</title>
+    <title>TC Market Prices v1.0.0</title> <!-- Dodano numer wersji -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,7 +58,7 @@
     </style>
 </head>
 <body>
-    <h1>Ceny przedmiotów z TC Market</h1>
+    <h1>TC Market Prices v1.0.0</h1> <!-- Dodano numer wersji -->
     <textarea id="dataInput" placeholder="Wpisz tutaj dane..."></textarea><br>
     <button id="processButton">Przetwórz dane</button><br>
     <input id="filterInput" type="text" placeholder="Filtruj według nazwy..." oninput="renderTable()">
@@ -108,8 +108,8 @@
                 const headerAuction = document.createElement("th");
                 headerAuction.textContent = "Numer Aukcji";
                 const headerItem = document.createElement("th");
-                headerItem.textContent = "Przedmiot";
                 const headerPrice = document.createElement("th");
+                headerItem.textContent = "Przedmiot";
                 headerPrice.textContent = "Cena";
                 headerRow.appendChild(headerAuction);
                 headerRow.appendChild(headerItem);
@@ -121,10 +121,10 @@
                         prices[item].forEach(({ auctionNumber, price }) => {
                             const row = document.createElement("tr");
                             const auctionCell = document.createElement("td");
-                            auctionCell.textContent = auctionNumber;
                             const itemCell = document.createElement("td");
-                            itemCell.textContent = item;
                             const priceCell = document.createElement("td");
+                            auctionCell.textContent = auctionNumber;
+                            itemCell.textContent = item;
                             priceCell.textContent = `${price} Tibia Coins`;
                             row.appendChild(auctionCell);
                             row.appendChild(itemCell);
