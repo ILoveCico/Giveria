@@ -70,11 +70,7 @@
         if (!txt) return;
 
         // 1) Numer aukcji
-        const idM = txt.match(/
-
-\[TC Market\]
-
-\s*#(\d+):/i);
+        const idM = txt.match(/\[TC Market\]\s*#(\d+):/i);
         if (!idM) return;
         const id = idM[1];
 
